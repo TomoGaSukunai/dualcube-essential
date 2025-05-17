@@ -1,5 +1,5 @@
 # 基本数学，二阶魔方的旋转映射数组生成
-见 [DualCubeMath.ipynb]()
+见 [DualCubeMath.ipynb](/DualCubeMath.ipynb)
 
 ## 魔方状态
 
