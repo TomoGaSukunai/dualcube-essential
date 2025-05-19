@@ -3,20 +3,34 @@
 #include <malloc.h>
 #include <string.h>
 
+/**
+ * 旋转映射矩阵
+ * 见 DualCubeMath.ipynb
+ */
 const int mapping[6][4][3] = {
 	{{0, 1, 0}, {1, 3, 0}, {3, 2, 0}, {2, 0, 0}},
 	{{0, 4, 2}, {4, 5, 1}, {5, 1, 2}, {1, 0, 1}},
 	{{0, 2, 1}, {2, 6, 2}, {6, 4, 1}, {4, 0, 2}},
 	{{4, 6, 0}, {6, 7, 0}, {7, 5, 0}, {5, 4, 0}},
 	{{2, 3, 1}, {3, 7, 2}, {7, 6, 1}, {6, 2, 2}},
-	{{1, 5, 2}, {5, 7, 1}, {7, 3, 2}, {3, 1, 1}}};
-const int FACT_OCT = 40320;
+	{{1, 5, 2}, {5, 7, 1}, {7, 3, 2}, {3, 1, 1}}
+};
 
+/**
+ * 常数 8！ 
+ */
+const int FACTORIAL_OCT = 40320;
+
+/**
+ * 将状态码转换为状态填入给定的地址
+ * @param code 状态码
+ * @param status 状态
+ */
 void codeToStatus(int code, int *status)
 {
-	int r1 = code % FACT_OCT;
-	int r2 = code / FACT_OCT;
-	int t = FACT_OCT;
+	int r1 = code % FACTORIAL_OCT;
+	int r2 = code / FACTORIAL_OCT;
+	int t = FACTORIAL_OCT;
 	int used[8] = {0};
 	// memset(used, false, sizeof(bool) * 8);
 	for (int i = 0; i < 8; i++)
@@ -41,6 +55,11 @@ void codeToStatus(int code, int *status)
 	}
 }
 
+/**
+ * 计算状态对应的状态码
+ * @param status 状态
+ * @return 状态码
+ */
 int getCode(int *status)
 {
 	int r1 = 0;
@@ -58,9 +77,15 @@ int getCode(int *status)
 		r2 = r2 * 3 + status[8 + i];
 		r1 = r1 * (8 - i) + t;
 	}
-	return r1 + FACT_OCT * r2;
+	return r1 + FACTORIAL_OCT * r2;
 }
 
+/**
+ * 旋转状态填入给定的地址
+ * @param status 状态
+ * @param way 旋转方式
+ * @param ret 旋转后的状态
+ */
 void rotate(int *status, int way, int *ret)
 {
 	memcpy(ret, status, sizeof(int) * 16);
@@ -76,7 +101,11 @@ void rotate(int *status, int way, int *ret)
 	}
 }
 
-void roll()
+/**
+ * 遍历所有状态
+ *
+ */
+void traversal()
 {
 	short *known = (short *)malloc(sizeof(short) * 264539520);
 	memset((void *)known, 0, sizeof(short) * 264539520);
@@ -128,6 +157,10 @@ void roll()
 int main(int argc, char *argv[])
 {
 	printf("Hello Cube\n");
-	roll();
+	traversal();
+	printf("Done\n");
+	
+	printf("Press enter to exit...\n");
+	getchar();
 	return 0;
 }
