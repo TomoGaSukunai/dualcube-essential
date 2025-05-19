@@ -104,8 +104,7 @@ void roll(){
 			known[nc] = s;
 		}
 
-		printf("%d\n",next - end);
-		printf("%dms\n", clock()-start);
+		printf("%d\t%dms\n",next - end, clock()-start);
 	}
 	free(known);free(que);
 }

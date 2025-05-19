@@ -1,3 +1,11 @@
+# 程序
+## C 实现
+
+使用gcc编译  
+需要自行安装msys2 并在tasks.json中配置正确的gcc路径  
+已在 Windows 10 / wsl ubuntu 上测试通过
+
+
 # 基本数学，二阶魔方的旋转映射数组生成
 见 [DualCubeMath.ipynb](/DualCubeMath.ipynb)
 
