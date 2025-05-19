@@ -17,14 +17,14 @@ void codeToStatus(int code, int *status)
 	int r1 = code % FACT_OCT;
 	int r2 = code / FACT_OCT;
 	int t = FACT_OCT;
-	bool used[8] = {false};
+	int used[8] = {0};
 	// memset(used, false, sizeof(bool) * 8);
 	for (int i = 0; i < 8; i++)
 	{
 		t /= 8 - i;
 		status[i] = r1 / t;
 		status[15 - i] = r2 % 3;
-		used[i] = false;
+		used[i] = 0;
 		r1 %= t;
 		r2 /= 3;
 	}
@@ -37,7 +37,7 @@ void codeToStatus(int code, int *status)
 				status[i]++;
 			}
 		}
-		used[status[i]] = true;
+		used[status[i]] = 1;
 	}
 }
 
