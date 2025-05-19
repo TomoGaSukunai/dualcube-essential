@@ -13,11 +13,10 @@ const int mapping[6][4][3] = {
 	{{0, 2, 1}, {2, 6, 2}, {6, 4, 1}, {4, 0, 2}},
 	{{4, 6, 0}, {6, 7, 0}, {7, 5, 0}, {5, 4, 0}},
 	{{2, 3, 1}, {3, 7, 2}, {7, 6, 1}, {6, 2, 2}},
-	{{1, 5, 2}, {5, 7, 1}, {7, 3, 2}, {3, 1, 1}}
-};
+	{{1, 5, 2}, {5, 7, 1}, {7, 3, 2}, {3, 1, 1}}};
 
 /**
- * 常数 8！ 
+ * 常数 8！
  */
 const int FACTORIAL_OCT = 40320;
 
@@ -107,6 +106,7 @@ void rotate(int *status, int way, int *ret)
  */
 void traversal()
 {
+
 	short *known = (short *)malloc(sizeof(short) * 264539520);
 	memset((void *)known, 0, sizeof(short) * 264539520);
 	int *que = (int *)malloc(sizeof(int) * 88179840);
@@ -121,7 +121,9 @@ void traversal()
 	while (idx < next)
 	{
 		end = next;
-		clock_t start = clock();
+		struct timespec start;
+		clock_gettime(CLOCK_REALTIME, &start);
+
 		while (idx < end)
 		{
 			int nc = que[idx++];
@@ -148,18 +150,30 @@ void traversal()
 			known[nc] = s;
 		}
 
-		printf("%d\t%dms\n", next - end, clock() - start);
+		struct timespec now;
+		clock_gettime(CLOCK_REALTIME, &now);
+		long span = (now.tv_sec - start.tv_sec) * 1000 + (now.tv_nsec - start.tv_nsec) / 1000000;
+		printf("%d\t%dms\n", next - end, span);
 	}
 	free(known);
 	free(que);
 }
 
 int main(int argc, char *argv[])
+
 {
+	struct timespec start;
+	clock_gettime(CLOCK_REALTIME, &start);
+
 	printf("Hello Cube\n");
 	traversal();
+
+	struct timespec now;
+	clock_gettime(CLOCK_REALTIME, &now);
+	long span = (now.tv_sec - start.tv_sec) * 1000 + (now.tv_nsec - start.tv_nsec) / 1000000;
+	printf("total time: %dms\n", span);
 	printf("Done\n");
-	
+
 	printf("Press enter to exit...\n");
 	getchar();
 	return 0;
