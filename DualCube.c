@@ -2,7 +2,17 @@
 #include <time.h>
 #include <malloc.h>
 #include <string.h>
+#include <pthread.h>
 
+#ifdef __WIN32__
+#include <intrin.h>
+#include <windows.h>
+#endif
+
+#ifdef __linux__
+#include <linux/time.h>
+// #include <unistd.h>
+#endif
 /**
  * 旋转映射矩阵
  * 见 DualCubeMath.ipynb
@@ -15,10 +25,9 @@ const int mapping[6][4][3] = {
 	{{2, 3, 1}, {3, 7, 2}, {7, 6, 1}, {6, 2, 2}},
 	{{1, 5, 2}, {5, 7, 1}, {7, 3, 2}, {3, 1, 1}}};
 
-/**
- * 常数 8！
- */
-const int FACTORIAL_OCT = 40320;
+const int FACTORIAL_OCT = 40320;			// 常数 8！
+const int DUAL_CUBE_SPACE_LEGAL = 88179840; // 魔方旋转合法状态空间大小
+const int DUAL_CUBE_SPACE_ALL = 264539520;	// 状态码状态空间大小
 
 /**
  * 将状态码转换为状态填入给定的地址
@@ -101,23 +110,95 @@ void rotate(int *status, int way, int *ret)
 }
 
 /**
+ * 满足pthread的参数要求,结构化进度条参数
+ * @param running 运行状态
+ * @param idx 当前索引
+ * @param next 下一层索引
+ */
+typedef struct
+{
+	int *running;
+	int *idx;
+	int *next;
+} bar_args;
+bar_args bar_data;
+
+/**
+ * 进度条 *
+ */
+void *processBar(void *args)
+{
+	bar_args *arg = (bar_args *)args;
+	char bar[11]; // 进度条
+	bar[10] = '\0';
+	struct timespec ts = {.tv_sec = 0, .tv_nsec = 100000000};
+
+	while (*(arg->running))
+	{
+		nanosleep(&ts, NULL);
+		int idx_ = *(arg->idx) * 10 / DUAL_CUBE_SPACE_LEGAL;
+		int next_ = *(arg->next) * 10 / DUAL_CUBE_SPACE_LEGAL;
+
+		for (int i = 0; i < 10; i++)
+		{
+			if (idx_ > 0)
+			{
+				idx_--;
+				next_--;
+				bar[i] = '=';
+			}
+			else if (next_ > 0)
+			{
+				next_--;
+				bar[i] = '+';
+			}
+			else
+			{
+				bar[i] = '-';
+			}
+		}
+		fflush(stdout);
+		printf("\r%s %d/%d/88179840\r", bar, *(arg->idx), *(arg->next));
+		fflush(stdout);
+	}
+	return NULL;
+}
+
+int idx = 0;
+int end = 1;
+int next = 1;
+int running = 1;
+
+/**
  * 遍历所有状态
  *
  */
 void traversal()
 {
 
-	short *known = (short *)malloc(sizeof(short) * 264539520);
-	memset((void *)known, 0, sizeof(short) * 264539520);
-	int *que = (int *)malloc(sizeof(int) * 88179840);
-	memset(que, 0, sizeof(int) * 88179840);
+	short *known = (short *)malloc(sizeof(short) * DUAL_CUBE_SPACE_ALL);
+	memset((void *)known, 0, sizeof(short) * DUAL_CUBE_SPACE_ALL);
+	int *que = (int *)malloc(sizeof(int) * DUAL_CUBE_SPACE_LEGAL);
+	memset(que, 0, sizeof(int) * DUAL_CUBE_SPACE_LEGAL);
 	short s = 0x0fff;
 	que[0] = 0;
-	int idx = 0,
-		end = 1,
-		next = 1;
 	int status[16];
 	int temp_s[16];
+
+	char blank[81];
+	memset(blank, ' ', 80);
+	blank[80] = '\0';
+
+	bar_data.running = &running;
+	bar_data.idx = &idx;
+	bar_data.next = &next;
+	pthread_t thread;
+	if (pthread_create(&thread, NULL, processBar, (void *)&bar_data) != 0)
+	{
+		perror("Failed to create thread");
+		return;
+	}
+
 	while (idx < next)
 	{
 		end = next;
@@ -153,8 +234,12 @@ void traversal()
 		struct timespec now;
 		clock_gettime(CLOCK_REALTIME, &now);
 		long span = (now.tv_sec - start.tv_sec) * 1000 + (now.tv_nsec - start.tv_nsec) / 1000000;
-		printf("%d\t%dms\n", next - end, span);
+		printf("\r%s\r%d\t%lums%s\n", blank, next - end, span, blank);
 	}
+	running = 0;
+	pthread_join(thread, NULL);
+	printf("\n");	
+	
 	free(known);
 	free(que);
 }
@@ -171,7 +256,7 @@ int main(int argc, char *argv[])
 	struct timespec now;
 	clock_gettime(CLOCK_REALTIME, &now);
 	long span = (now.tv_sec - start.tv_sec) * 1000 + (now.tv_nsec - start.tv_nsec) / 1000000;
-	printf("total time: %dms\n", span);
+	printf("total time: %lums\n", span);
 	printf("Done\n");
 
 	printf("Press enter to exit...\n");
