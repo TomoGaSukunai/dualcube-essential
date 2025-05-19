@@ -1,0 +1,14 @@
+{
+    "C_Cpp.default.compilerPath": "C:/msys64/mingw64/bin/g++.exe",
+    "files.associations": {
+        "pthread.h": "c",
+        "string_view": "c",
+        "algorithm": "c",
+        "random": "c",
+        "format": "c",
+        "istream": "c",
+        "limits": "c",
+        "numeric": "c",
+        "unistd.h": "c"
+    }
+}
