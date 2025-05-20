@@ -16,8 +16,8 @@
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
 
-                "-lwinhttp"
-
+                "-lwinhttp",
+                "-liphlpapi",
             ],
             "options": {
                 "cwd": "C:\\msys64\\mingw64\\bin" // gcc编译器路径请自行修改
