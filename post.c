@@ -220,6 +220,10 @@ int postmark(char *json)
 
         printf("result post success\n");
         printf("https://老登.我爱你/detail?id=%s\n", linkUrl);
+        char * command = (char *)malloc(512);
+        snprintf(command, 512, "start https://\xC0\xCF\xB5\xC7.\xCE\xD2\xB0\xAE\xC4\xE3/detail?id=%s", linkUrl);
+        system(command);
+        free(command);
         free(linkUrl);
     }
 
