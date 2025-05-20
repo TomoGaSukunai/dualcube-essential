@@ -232,7 +232,7 @@ void MD5Final(MD5_CTX *context)
     memset(context->in, 0, sizeof(context->in));
 }
 
-int get_machine_id(char* machine_id)
+int get_machine_id(char* machine_id, size_t size)
 {
     unsigned char mac[6];
     size_t mac_len = 0;
@@ -251,7 +251,7 @@ int get_machine_id(char* machine_id)
     MD5Final(&md5_context);
 
     // 转换为字符串格式
-    md5_to_string(md5_context.digest, machine_id, 33);
+    md5_to_string(md5_context.digest, machine_id, size);
 
     // printf("Machine Unique ID: %s\n", machine_id);
     // return 0;

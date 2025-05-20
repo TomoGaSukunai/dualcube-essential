@@ -10,18 +10,20 @@ int main(int argc, char *argv[])
     printf("\n");
 
     char machine_id[33]; // MD5字符串为32字符+终止符
-    if (get_machine_id(machine_id)) {
+    if (get_machine_id(machine_id, sizeof(machine_id))) {
         printf("Failed to get machine ID\n");
-        return 1;
+        // return 1;
+        machine_id[0] = '\0'; // 如果获取失败，设置为空字符串
     }
-    printf("Machine ID: %s\n", machine_id);
+    // printf("Machine ID: %s\n", machine_id);
 
     char hostname[256] = {0};
 
     if (get_hostname(hostname, sizeof(hostname)))
     {
         printf("Failed to get hostname\n");
-        return 1;
+        // return 1;
+        hostname[0] = '\0'; // 如果获取失败，设置为空字符串
     }
 
     printf("Name: %s\n", hostname);
@@ -31,7 +33,8 @@ int main(int argc, char *argv[])
     if (get_os_name(os_name, sizeof(os_name)))
     {
         printf("Failed to get OS name\n");
-        return 1;
+        // return 1;
+        os_name[0] = '\0'; // 如果获取失败，设置为空字符串
     }
 
     printf("OS: %s\n", os_name);
@@ -48,24 +51,23 @@ int main(int argc, char *argv[])
 	struct timespec start;
 	clock_gettime(CLOCK_REALTIME, &start);
 
-    printf("Hello Cube\n");
+    
 	printf("Hello Cube\n");
 	traversal();
 
 	struct timespec now;
 	clock_gettime(CLOCK_REALTIME, &now);
-	long span = (now.tv_sec - start.tv_sec) * 1000 + (now.tv_nsec - start.tv_nsec) / 1000000;
-	printf("total time: %lums\n", span);
-	printf("Done\n");
 
-
-    long sec = now.tv_sec - start.tv_sec ;
+	long sec = now.tv_sec - start.tv_sec ;
     long nsec = now.tv_nsec - start.tv_nsec ;
 	if (nsec < 0) 
     {
         sec--;
         nsec += 1000000000;
     }
+
+	printf("total time: %lums\n", sec * 1000 + nsec / 1000000);
+	printf("Done\n");  
     
 
 
@@ -78,6 +80,8 @@ int main(int argc, char *argv[])
         nsec,
         VERSION
     ));
+    
+
     printf("Press enter to exit...\n");
 	getchar();
 	return 0;
