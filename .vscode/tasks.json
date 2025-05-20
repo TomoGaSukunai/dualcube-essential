@@ -5,6 +5,7 @@
             "label": "C/C++: gcc.exe 生成活动文件",
             "command": "C:\\msys64\\mingw64\\bin\\gcc.exe", // gcc编译器路径请自行修改
             "args": [
+
                 "-static", // 静态链接
                 "-std=c11", // C11标准
                 "-lpthread", // 链接pthread库
@@ -14,6 +15,9 @@
                 "${file}",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
+
+                "-lwinhttp"
+
             ],
             "options": {
                 "cwd": "C:\\msys64\\mingw64\\bin" // gcc编译器路径请自行修改
