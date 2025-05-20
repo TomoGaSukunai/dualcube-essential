@@ -6,8 +6,8 @@
 
 int main(int argc, char *argv[])
 {
-    
-    printf("\n");
+    SetConsoleOutputCP(65001); // 设置控制台输出编码为UTF-8s
+    printf("你好\n");
 
     char machine_id[33]; // MD5字符串为32字符+终止符
     if (get_machine_id(machine_id, sizeof(machine_id))) {
@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
         nsec,
         VERSION
     ));
-    
+
 
     printf("Press enter to exit...\n");
 	getchar();
