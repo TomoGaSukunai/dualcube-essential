@@ -2,7 +2,7 @@
 #include "./info.c"
 #include "./machine_id.c"
 #include "./post.c"
-#define VERSION "0.0.1"
+#define VERSION "0.0.2"
 
 int main(int argc, char *argv[])
 {
