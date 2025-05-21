@@ -2,7 +2,7 @@
 #include <time.h>
 #include <malloc.h>
 #include <string.h>
-
+#include <pthread.h>
 
 #ifdef __WIN32__
 #include <intrin.h>
@@ -10,7 +10,6 @@
 #endif
 
 #ifdef __linux__
-#include <pthread.h>
 #include <linux/time.h>
 // #include <unistd.h>
 #endif
