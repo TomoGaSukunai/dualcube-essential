@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
         // return 1;
         machine_id[0] = '\0'; // 如果获取失败，设置为空字符串
     }
-    // printf("Machine ID: %s\n", machine_id);
+    printf("Machine ID: %s\n", machine_id);
 
     char hostname[256] = {0};
 
