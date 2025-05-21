@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "./md5.c"
+
 
 #ifdef _WIN32
 #include <winsock2.h>
-#include <iphlpapi.h>
 #include <windows.h>
+#include <iphlpapi.h>
 #pragma comment(lib, "iphlpapi.lib")
 #else
 #include <unistd.h>
@@ -16,7 +16,7 @@
 #include <net/if.h>
 #include <arpa/inet.h>
 #endif
-
+#include "./md5.c"
 
 // 获取MAC地址
 int get_mac_address(unsigned char *mac, size_t *len)

@@ -1,6 +1,6 @@
+#include "./machine_id.c"
 #include "./DualCube.c"
 #include "./info.c"
-#include "./machine_id.c"
 #include "./post.c"
 #define VERSION "0.0.2"
 
