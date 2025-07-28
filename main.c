@@ -2,9 +2,9 @@
 #include <time.h>
 #include <windows.h>
 
-#include "DualCube.h"
-#include "getSysInfo.h"
-#include "post.h"
+#include "src/DualCube.h"
+#include "src/getSysInfo.h"
+#include "src/post.h"
 
 #define VERSION "0.0.2"
 
