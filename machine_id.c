@@ -16,9 +16,15 @@
 #include <net/if.h>
 #include <arpa/inet.h>
 #endif
-#include "./md5.c"
+
+#include "global.h"
+#include "./md5.h"
 
 // 获取MAC地址
+
+/**
+ * @return 1 for success 
+ */
 int get_mac_address(unsigned char *mac, size_t *len)
 {
 #ifdef _WIN32
@@ -93,14 +99,23 @@ int get_mac_address(unsigned char *mac, size_t *len)
 #endif
 }
 
+/**
+ * 
+ * @return 0 for success 
+ */
 
 int get_machine_id(char *machine_id, size_t len)
 {
+    if (len != 33)
+    {
+        return -1;
+    }
+    
     unsigned char mac[6];
     size_t mac_len;
     if (!get_mac_address(mac, &mac_len)){
 
-        return 1;
+        return -1;
     }
     MD5_CTX context;
     unsigned char digest[16];
