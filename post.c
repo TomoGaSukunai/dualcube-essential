@@ -1,13 +1,13 @@
+#include "post.h"
 #include <windows.h>
 #include <winhttp.h>
 #include <stdio.h>
 #include <wchar.h>
+
 #define DC_HOST L"47.121.206.107"
 #define DC_PORT 8081
 #define DC_PATH L"/api/dual-cube"
 
-
-#pragma comment(lib, "winhttp.lib") // 自动链接 WinHTTP 库
 
 char *build_json(char *machine_id, char *hostname, char *os_name, char *cpu_brand, long sec, long nsec, char *version)
 {
@@ -65,7 +65,7 @@ char *build_json(char *machine_id, char *hostname, char *os_name, char *cpu_bran
     return json;
 }
 
-int postmark(char *json)
+int postmark(char *json, char** response)
 {
     HINTERNET hSession = NULL;
     HINTERNET hConnect = NULL;
@@ -220,10 +220,17 @@ int postmark(char *json)
 
         printf("result post success\n");
         printf("https://老登.我爱你/detail?id=%s\n", linkUrl);
-        char * command = (char *)malloc(512);
-        snprintf(command, 512, "start https://\xC0\xCF\xB5\xC7.\xCE\xD2\xB0\xAE\xC4\xE3/detail?id=%s", linkUrl);
-        system(command);
-        free(command);
+        
+        if(*response != NULL){free(*response);}
+        *response = (char *)malloc(512);
+        snprintf(*response, 512, "https://老登.我爱你/detail?id=%s\n", linkUrl);
+
+
+        // char * command = (char *)malloc(512);
+        // snprintf(command, 512, "start https://\xC0\xCF\xB5\xC7.\xCE\xD2\xB0\xAE\xC4\xE3/detail?id=%s", linkUrl);
+        // system(command);
+        // free(command);
+        
         free(linkUrl);
     }
 

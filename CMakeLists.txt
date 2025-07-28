@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.26)
 project(DualCube C)
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 
@@ -10,7 +10,8 @@ add_compile_options(-O3)
 # add_compile_options(-static)
 # add_compile_options(-std=c11)
 
+aux_source_directory(./ SRC_LIST)
 
-add_executable(DualCube main.c)
+add_executable(DualCube main.c ${SRC_LIST})
 
 target_link_libraries(DualCube iphlpapi.lib winhttp.lib pthread.lib ws2_32.lib)

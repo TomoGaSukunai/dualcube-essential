@@ -13,6 +13,10 @@
 #include <linux/time.h>
 // #include <unistd.h>
 #endif
+
+
+#include "DualCube.h"
+
 /**
  * 旋转映射矩阵
  * 见 DualCubeMath.ipynb

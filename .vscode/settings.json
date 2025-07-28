@@ -1,5 +1,5 @@
 {
-    "C_Cpp.default.compilerPath": "C:/msys64/mingw64/bin/g++.exe",
+    "C_Cpp.default.compilerPath": "C:/msys64/ucrt64/bin/gcc.exe",
     "files.associations": {
         "pthread.h": "c",
         "string_view": "c",
@@ -44,6 +44,7 @@
         "typeinfo": "c",
         "utility": "c",
         "variant": "c",
-        "*.rh": "c"
+        "*.rh": "c",
+        "post.h": "c"
     }
 }
