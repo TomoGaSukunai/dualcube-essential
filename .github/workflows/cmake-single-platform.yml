@@ -41,11 +41,14 @@ jobs:
         cmake -G "MinGW Makefiles" ..
         mingw32-make
         
-    - name: Upload exe artifact
+    - name: Upload all compiled targets
       uses: actions/upload-artifact@v4
       with:
-        name: my-exe
-        path: build/DualCube.exe
+        name: all-targets
+        path: |
+          build/DualCubeCLI.exe
+          build/DualCubeGUI.exe
+          build/libDualCubeDLL.dll
         
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')
