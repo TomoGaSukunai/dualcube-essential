@@ -3,6 +3,7 @@
 #include <malloc.h>
 #include <string.h>
 #include <pthread.h>
+#include "./DualCube.h"
 
 #ifdef __WIN32__
 #include <intrin.h>
@@ -13,9 +14,6 @@
 #include <linux/time.h>
 // #include <unistd.h>
 #endif
-
-
-#include "DualCube.h"
 
 /**
  * 旋转映射矩阵
@@ -168,17 +166,21 @@ void *processBar(void *args)
 	return NULL;
 }
 
-int idx = 0;
-int end = 1;
-int next = 1;
-int running = 1;
+int idx;
+int end;
+int next;
+int running;
 
 /**
  * 遍历所有状态
  *
  */
-void traversal()
+DLL_EXPORT void traversal()
 {
+	idx = 0;
+	end = 1;
+	next = 1;
+	running = 1;
 
 	short *known = (short *)malloc(sizeof(short) * DUAL_CUBE_SPACE_ALL);
 	memset((void *)known, 0, sizeof(short) * DUAL_CUBE_SPACE_ALL);
@@ -242,9 +244,9 @@ void traversal()
 	}
 	running = 0;
 	pthread_join(thread, NULL);
-	printf("\n");	
-	
 	free(known);
 	free(que);
 }
+
+
 
