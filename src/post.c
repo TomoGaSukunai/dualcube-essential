@@ -8,11 +8,9 @@
 #define DC_PORT 8081
 #define DC_PATH L"/api/dual-cube"
 
-
 char *build_json(char *machine_id, char *hostname, char *os_name, char *cpu_brand, long sec, long nsec, char *version)
 {
-    int len = snprintf(NULL, 0,
-                       "{"
+    char *template = "{"
                        "\"uuid\": \"%s\","
                        "\"info\": {"
                        "\"hostname\": \"%s\","
@@ -24,7 +22,10 @@ char *build_json(char *machine_id, char *hostname, char *os_name, char *cpu_bran
                        "\"nanosec\": %lu"
                        "},"
                        "\"version\": \"%s\""
-                       "}",
+                       "}"; 
+
+    int len = snprintf(NULL, 0,
+                       template,
                        machine_id,
                        hostname,
                        os_name,
@@ -42,19 +43,7 @@ char *build_json(char *machine_id, char *hostname, char *os_name, char *cpu_bran
         return NULL; // 内存分配失败
     }
     snprintf(json, len + 1,
-             "{"
-             "\"uuid\": \"%s\","
-             "\"info\": {"
-             "\"hostname\": \"%s\","
-             "\"os\": \"%s\","
-             "\"cpu\": \"%s\""
-             "},"
-             "\"timespec\": {"
-             "\"sec\": %lu,"
-             "\"nanosec\": %lu"
-             "},"
-             "\"version\": \"%s\""
-             "}",
+             template,
              machine_id,
              hostname,
              os_name,
@@ -107,7 +96,7 @@ int postmark(char *json, char** response)
         DC_PATH, // 请求路径
         NULL,    // 协议版本（默认 HTTP/1.1）
         WINHTTP_NO_REFERER,
-        WINHTTP_DEFAULT_ACCEPT_TYPES,
+        WINHTTP_DEFAULT_ACCEPT_TYPES,        
         0 // 不用HTTPS
         // WINHTTP_FLAG_SECURE  // 启用 HTTPS
     );
@@ -203,7 +192,7 @@ int postmark(char *json, char** response)
         pBuffer[dwDownloaded] = '\0';
         if (statusCode != 200)
         {
-            printf("\nhttp://musashi/result/%s\n", pBuffer);
+            printf("%s", pBuffer);
         }
         else
         {
