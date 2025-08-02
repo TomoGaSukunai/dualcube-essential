@@ -16,7 +16,7 @@
 #define ID_EDIT_CPU 3004
 #define ID_EDIT_TIME 3005
 
-#define VERSION "0.3.0G"
+#define VERSION "GUI.0.1.0"
 
 sysInfo info;
 struct timespec result_time;

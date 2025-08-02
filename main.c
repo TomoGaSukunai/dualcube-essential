@@ -6,7 +6,7 @@
 #include "src/getSysInfo.h"
 #include "src/post.h"
 
-#define VERSION "0.0.2"
+#define VERSION "CLI.0.1.0"
 
 int main(int argc, char *argv[])
 {
