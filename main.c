@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 
     // printf("CPU: %s\n", cpu_brand);
 
-    sysInfo info = getSysInfo();
+    SysInfo info = GetSysInfo();
 
 
     printf("Machine ID: %s\n", info.machine_id);

@@ -7,6 +7,18 @@
 #else
 #define DLL_EXPORT
 #endif // DLL_EXPORT
-DLL_EXPORT void traversal();
 
+#define TRAVERSAL_MSG_STEP 1
+#define TRAVERSAL_MSG_INFO 2
+
+typedef struct traversalMsg {
+    char msgType;
+    union {
+        int step[2];
+        char str[254];
+    } msgData;
+}traversalMsg;
+
+DLL_EXPORT void traversal();
+DLL_EXPORT void traversalWithProgress( void (*callback)(traversalMsg));
 #endif // DUALCUBE_H

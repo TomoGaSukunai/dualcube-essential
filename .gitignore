@@ -3,3 +3,5 @@
 *.bak.*
 *.test.*
 /build/
+/cmake**/
+/res/

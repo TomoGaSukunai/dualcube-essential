@@ -30,10 +30,9 @@ int get_mac_address(unsigned char *mac, size_t *len)
 #ifdef _WIN32
     IP_ADAPTER_ADDRESSES *adapter_addresses = NULL;
     ULONG out_buffer_size = 0;
-    DWORD result;
 
     // 获取所需缓冲区大小
-    result = GetAdaptersAddresses(AF_UNSPEC, 0, NULL, adapter_addresses, &out_buffer_size);
+    DWORD result = GetAdaptersAddresses(AF_UNSPEC, 0, NULL, adapter_addresses, &out_buffer_size);
     if (result != ERROR_BUFFER_OVERFLOW)
     {
         return 0;
@@ -56,8 +55,7 @@ int get_mac_address(unsigned char *mac, size_t *len)
     IP_ADAPTER_ADDRESSES *adapter = adapter_addresses;
     while (adapter)
     {
-        if (adapter->PhysicalAddressLength > 0 &&
-            !(adapter->IfType == IF_TYPE_SOFTWARE_LOOPBACK))
+        if (!(adapter->PhysicalAddressLength <= 0 || adapter->IfType == IF_TYPE_SOFTWARE_LOOPBACK))
         {
             *len = (adapter->PhysicalAddressLength < 6) ? adapter->PhysicalAddressLength : 6;
             memcpy(mac, adapter->PhysicalAddress, *len);
@@ -300,8 +298,8 @@ int get_os_name(char *buffer, size_t buffer_size)
     return 0;
 }
 
-sysInfo getSysInfo(){
-    sysInfo info;
+SysInfo GetSysInfo(){
+    SysInfo info;
     get_machine_id(info.machine_id, sizeof(info.machine_id));
     get_hostname(info.hostname, sizeof(info.hostname));
     get_os_name(info.os_name, sizeof(info.os_name));
