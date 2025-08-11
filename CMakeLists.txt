@@ -11,6 +11,8 @@ set(DLL_SOURCE_FILES
 )
 
 
+include_directories(src)
+include_directories(Corin)
 
 add_link_options(-static)
 add_compile_options(-O3)
@@ -18,10 +20,10 @@ add_compile_options(-O3)
 add_library(DualCubeDLL SHARED  ${DLL_SOURCE_FILES})
 
 aux_source_directory(./src SRC_LIST)
-
-add_executable(DualCubeGUI WIN32 winMain.c ${SRC_LIST})
-target_link_libraries(DualCubeGUI iphlpapi.lib winhttp.lib pthread.lib ws2_32.lib)
+aux_source_directory(./Corin CORIN_SRC)
 
 add_executable(DualCubeCLI main.c ${SRC_LIST})
 target_link_libraries(DualCubeCLI iphlpapi.lib winhttp.lib pthread.lib ws2_32.lib)
 
+add_executable(DualCubeGUI WIN32 winMain.c ${SRC_LIST} ${CORIN_SRC})
+target_link_libraries(DualCubeGUI iphlpapi.lib winhttp.lib pthread.lib ws2_32.lib comctl32.lib)
