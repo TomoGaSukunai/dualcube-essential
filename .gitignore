@@ -2,6 +2,11 @@
 *.exe
 *.bak.*
 *.test.*
-/build/
+/build**/
 /cmake**/
 /res/
+/.idea/
+/.vscode/
+/.github/
+
+
