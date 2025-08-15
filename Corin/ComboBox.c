@@ -1,6 +1,7 @@
 //
 // Created by Ayaphis on 25-8-5.
 //
+#define UNICODE
 #include <windows.h>
 #include "ComboBox.h"
 CorinComboBoxData CreateCorinComboBoxData(int x, int y, int width, int height, HWND hWnd, HMENU hMenu, HINSTANCE hInstance) {
@@ -11,7 +12,7 @@ CorinComboBoxData CreateCorinComboBoxData(int x, int y, int width, int height, H
     data.m_Size.cy = height;
     data.m_hWnd = CreateWindowEx(
         WS_EX_CLIENTEDGE,
-        "ComboBox",
+        L"ComboBox",
         NULL,
         CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP | WS_VISIBLE | WS_CHILD,
         data.m_X, data.m_Y,
@@ -93,12 +94,12 @@ LRESULT CALLBACK ComboBoxOnDrawItem(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
     SelectObject(hdc, oldBrush);
     DeleteObject(brush);
 
-    const TCHAR text[256];
+    const WCHAR text[256];
     // int len = GetWindowText(data->m_hWnd, text, 256);
     UINT len = SendMessage(lpDrawItemStruct->hwndItem,
         CB_GETLBTEXT,
         lpDrawItemStruct->itemID,
-        text);
+        (WCHAR)text);
 
     LOGFONT lf;
     ZeroMemory(&lf, sizeof(LOGFONT));

@@ -32,7 +32,7 @@ LRESULT CALLBACK AppOnEraseBackGround(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
         FillRect(hdcMem, &rc, hBrush);
         DeleteObject(hBrush);
 
-        hBrush = CreateSolidBrush(RGB(200, 215, 189));
+        hBrush = CreateSolidBrush(app->m_BackgroundCOLOR);
 
         void** old = SelectObject(hdcMem, hBrush);
         BeginPath(hdcMem);
@@ -74,9 +74,11 @@ LRESULT CALLBACK AppOnEraseBackGround(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
         for (size_t y = 0; y < dstBmp.bmHeight; y++) {
             for (size_t x = 0; x < dstBmp.bmWidth; x++) {
-                size_t nSrc = (x + y * srcBmp.bmWidth) * sizeof(BYTE) * 4;
+                size_t nSrc = (x - app->m_Xshift + (y - app->m_Yshift) * srcBmp.bmWidth) * sizeof(BYTE) * 4;
+                if (nSrc < 0) continue;
                 if (nSrc >= lenSrc) continue;
                 size_t nDst = (x + y * dstBmp.bmWidth) * sizeof(BYTE) * 4;
+                if (nDst < 0) continue;
                 if (nDst >= lenDst) continue;
                 unsigned int alpha = srcBuffer[nSrc + 3];
                 unsigned int na = 255 - alpha;

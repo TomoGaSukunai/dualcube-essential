@@ -17,6 +17,7 @@ typedef struct CorinProgressBarData {
     UINT_PTR m_HoverTimer;
     float m_Ratio;
     BOOL m_Meter;
+    COLORREF m_TextColor;
     // void* m_App;
 } CorinStaticData;
 

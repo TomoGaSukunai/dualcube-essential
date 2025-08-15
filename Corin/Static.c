@@ -184,8 +184,6 @@ LRESULT CALLBACK StaticOnDrawItem2(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
     BitBlt(hdc, rc.left, rc.top, bmp.bmWidth, bmp.bmHeight, hdcMem, 0, 0, SRCCOPY);
 
-
-
     LOGFONT lf;
     ZeroMemory(&lf, sizeof(LOGFONT));
     lf.lfHeight = 24;
@@ -196,7 +194,7 @@ LRESULT CALLBACK StaticOnDrawItem2(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
     SelectObject(hdc, hFont);
     HFONT oldFont = SelectObject(hdc, hFont);
 
-    SetTextColor(hdc, RGB(100, 115, 89));
+    SetTextColor(hdc,data->m_TextColor);
     SetBkMode(hdc, TRANSPARENT);
 
     DrawTextA(hdc, logs, 4096 ,&rc ,

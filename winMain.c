@@ -15,7 +15,6 @@
 #define IDC_BN_SINGLE 0x0100
 #define IDC_BN_SUBMIT 0x0101
 
-
 #define IDC_SS_MAC_MD5 0x0111
 #define IDC_SS_HOSTNAME 0x0112
 #define IDC_SS_OSNAME 0x0113
@@ -28,12 +27,9 @@
 #define IDC_LB_CPU_BRAND 0x0124
 #define IDC_LB_TIME_MS 0x0125
 
-
-#define IDC_PB_RUNNING 0x0130
-
+#define IDC_PB_SINGLE 0x0130
 
 #define VERSION "GUI.0.1.0"
-
 
 CorinAppData appData;
 
@@ -50,36 +46,37 @@ CorinStaticData staticMacMD5;
 CorinStaticData staticHostName;
 CorinStaticData staticOSName;
 CorinStaticData staticCPUBrand;
-CorinStaticData staticTimeMs;
+CorinStaticData staticSingle;
 
-CorinStaticData progressRunning;
+CorinStaticData progressSingle;
 
-BOOL run = FALSE;
-// const TCHAR labels[][] = {
-//     L"Machine id MD5:",
-//     L"Hostname:",
-//     L"OS Name:"
-//     L"CPU Brand:"
-//     L"Time take:"
-// };
+BOOL runSingle = FALSE;
 
 SysInfo info;
 struct timespec result_time;
 
-
-
-void updateProgress(const float f) {
-    SendMessage(appData.m_hWnd, WM_USER, (WPARAM)(long)(floor(f * 100)), (LPARAM)0);
+void updateProgress(traversalMsg msg) {
+    switch (msg.type) {
+        case TRAVERSAL_MSG_INFO:
+            // snprintf(logs, sizeof(logs),"%s%s",logs,msg.msgData.str);
+            // InvalidateRect(staticLog.m_hWnd, NULL, TRUE);
+            break;
+        case TRAVERSAL_MSG_STEP:
+            progressSingle.m_Ratio = (float)msg.data.step[0] / (float)msg.data.step[1];
+            InvalidateRect(progressSingle.m_hWnd, NULL, TRUE);
+            break;
+        default:
+    }
 }
 
 typedef struct  {
-    void (*callback)(float f);
+    void (*callback)(traversalMsg);
 } updateProgressStruct;
 
 updateProgressStruct ssss;
 
 
-void traversalWrapper(void* argData) {
+void* traversalWrapper(void* argData) {
 
     // if (AllocConsole()) {
     //     FILE *pCout;
@@ -102,7 +99,7 @@ void traversalWrapper(void* argData) {
     // message box tell time taken by device traversal
     char message[256];
     sprintf(message, "Traversal completed.\nTime taken: %lld ms", milliseconds);
-    HWND hEdit = staticTimeMs.m_hWnd;
+    HWND hEdit = staticSingle.m_hWnd;
     char res[128];
     sprintf(res, "%lld ms", milliseconds);
 
@@ -116,16 +113,17 @@ void traversalWrapper(void* argData) {
     EnableWindow(buttonSingle.m_hWnd, TRUE);
     SetWindowText(buttonSingle.m_hWnd, "Start");
     EnableWindow(buttonSubmit.m_hWnd, TRUE);
-    run = FALSE;
+    runSingle = FALSE;
     InvalidateRect(hEdit, NULL, TRUE);
 
+    return NULL;
 }
 
 LRESULT CALLBACK MainProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
         case WM_USER: {
-            progressRunning.m_Ratio = (float)wParam/100.0f;
-            InvalidateRect(progressRunning.m_hWnd, NULL, TRUE);
+            progressSingle.m_Ratio = (float)wParam/100.0f;
+            InvalidateRect(progressSingle.m_hWnd, NULL, TRUE);
             return FALSE;
         }
         case WM_CREATE: {
@@ -136,17 +134,17 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             labelCPUBrand = CreateCorinStatic(10, 130, 90, 30, hwnd, (HMENU) IDC_LB_CPU_BRAND, hInst, L"CPUBrand:");
             labelTimeMs = CreateCorinStatic(10, 170, 90, 30, hwnd, (HMENU) IDC_LB_TIME_MS, hInst, L"Time MS:");
 
-            staticMacMD5 = CreateCorinStatic(100, 10, 290, 30, hwnd, (HMENU) IDC_SS_MAC_MD5, hInst, L"");
-            staticHostName = CreateCorinStatic(100, 50, 290, 30, hwnd, (HMENU) IDC_SS_HOSTNAME, hInst, L"");
-            staticOSName = CreateCorinStatic(100, 90, 290, 30, hwnd, (HMENU) IDC_SS_OSNAME, hInst, L"");
-            staticCPUBrand = CreateCorinStatic(100, 130, 290, 30, hwnd, (HMENU) IDC_SS_CPU_BRAND, hInst, L"");
-            staticTimeMs = CreateCorinStatic(100, 170, 200, 30, hwnd, (HMENU) IDC_SS_TIME_MS, hInst, L"");
+            staticMacMD5 = CreateCorinStatic(100, 10, 300, 30, hwnd, (HMENU) IDC_SS_MAC_MD5, hInst, L"");
+            staticHostName = CreateCorinStatic(100, 50, 300, 30, hwnd, (HMENU) IDC_SS_HOSTNAME, hInst, L"");
+            staticOSName = CreateCorinStatic(100, 90, 300, 30, hwnd, (HMENU) IDC_SS_OSNAME, hInst, L"");
+            staticCPUBrand = CreateCorinStatic(100, 130, 300, 30, hwnd, (HMENU) IDC_SS_CPU_BRAND, hInst, L"");
+            staticSingle = CreateCorinStatic(100, 170, 210, 30, hwnd, (HMENU) IDC_SS_TIME_MS, hInst, L"");
 
-            progressRunning = CreateCorinStatic(100, 170, 200, 30, hwnd, (HMENU) IDC_PB_RUNNING, hInst, L"");
-            progressRunning.m_GlassColor = RGB(192, 127, 192);
-            progressRunning.m_Alpha = 192;
-            progressRunning.m_Meter = TRUE;
-            buttonSubmit = CreateCorinButton(300, 170, 90, 30, hwnd, (HMENU) IDC_BN_SUBMIT, hInst);
+            progressSingle = CreateCorinStatic(100, 170, 210, 30, hwnd, (HMENU) IDC_PB_SINGLE, hInst, L"");
+            progressSingle.m_GlassColor = RGB(192, 127, 192);
+            progressSingle.m_Alpha = 192;
+            progressSingle.m_Meter = TRUE;
+            buttonSubmit = CreateCorinButton(310, 170, 90, 30, hwnd, (HMENU) IDC_BN_SUBMIT, hInst);
             buttonSingle = CreateCorinButton(50, 220, 300, 60, hwnd, (HMENU) IDC_BN_SINGLE, hInst);
 
             info = GetSysInfo();
@@ -155,18 +153,18 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             SetWindowText(staticHostName.m_hWnd, info.hostname);
             SetWindowText(staticOSName.m_hWnd, info.os_name);
             SetWindowText(staticCPUBrand.m_hWnd, info.cpu_brand);
-            SetWindowText(staticTimeMs.m_hWnd, "Not tested");
+            SetWindowText(staticSingle.m_hWnd, "Not tested");
 
             SetWindowText(buttonSingle.m_hWnd, "Single");
             SetWindowText(buttonSubmit.m_hWnd, "Submit");
 
-
+            EnableWindow(buttonSubmit.m_hWnd, FALSE);
             return 0;
         }
         case WM_COMMAND: {
             switch (LOWORD(wParam)) {
                 case IDC_BN_SINGLE:
-                    run = TRUE;
+                    runSingle = TRUE;
                     // set button disabled and text running
                     HWND button = buttonSingle.m_hWnd;
                     EnableWindow(button, FALSE);
@@ -214,9 +212,9 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 case IDC_SS_CPU_BRAND:
                     return StaticOnDrawItem(hwnd, uMsg, wParam, lParam, &staticCPUBrand);
                 case IDC_SS_TIME_MS:
-                    return !run && StaticOnDrawItem(hwnd, uMsg, wParam, lParam, &staticTimeMs);
-                case IDC_PB_RUNNING:
-                    return run && StaticOnDrawItem(hwnd, uMsg, wParam, lParam, &progressRunning);
+                    return !runSingle && StaticOnDrawItem(hwnd, uMsg, wParam, lParam, &staticSingle);
+                case IDC_PB_SINGLE:
+                    return runSingle && StaticOnDrawItem(hwnd, uMsg, wParam, lParam, &progressSingle);
                 case IDC_LB_MD5:
                     return StaticOnDrawItem(hwnd, uMsg, wParam, lParam, &labelMacMD5);
                 case IDC_LB_HOSTNAME:
@@ -274,18 +272,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         MessageBox(NULL, "Failed to register window class", "Error", MB_ICONERROR);
         return 0;
     }
+    appData.m_X = 500;
+    appData.m_Y = 500;
+    appData.m_Size.cx = 420;
+    appData.m_Size.cy = 320;
 
     HWND hwnd = CreateWindowEx(
         WS_EX_CLIENTEDGE,
         CLASS_NAME,
         "Doki Doki Dual Cube",
-
         // Remove thick frame and maximize box
         DS_SETFONT | DS_MODALFRAME | WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU,
-
         // Position and size of the window
-        CW_USEDEFAULT, CW_USEDEFAULT,
-        420, 320,
+         appData.m_X, appData.m_Y, appData.m_Size.cx, appData.m_Size.cy,
         NULL,
         NULL,
         hInstance,

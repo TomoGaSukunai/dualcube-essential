@@ -14,6 +14,9 @@ typedef struct  CorinAppData{
     HDC m_BackgroundDC;
     HBITMAP m_BackgroundBitmap;
     HWND m_hWnd;
+    COLORREF m_BackgroundCOLOR;
+    int m_Xshift;
+    int m_Yshift;
 }CorinAppData;
 
 LRESULT CALLBACK AppOnCreate(HWND, UINT, WPARAM, LPARAM, CorinAppData*);
