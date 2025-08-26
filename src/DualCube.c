@@ -1,3 +1,5 @@
+#include <stdint.h>
+#include <immintrin.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -36,6 +38,7 @@ static const int mapping[6][4][3] = {
 
 static const int DUAL_CUBE_FULL_SPACE = 264539520; // 状态码状态空间大小
 static const int FACTORIAL_OCT = 40320;// 常数 8！
+
 static int gR1Mod = 40320;
 static int gSpaceLegal = 88179840; // 魔方旋转合法状态空间大小
 static int gSpaceAll = 264539520;
@@ -44,7 +47,7 @@ static int gHALF = 6;
 static KNOWN_T gKnownVisited = 0x0fff;
 static int gBatchSize = 512;
 
-static pthread_mutex_t mutexTraversal = PTHREAD_MUTEX_INITIALIZER; //lock for worker
+static pthread_mutex_t mutexTraversal = PTHREAD_MUTEX_INITIALIZER; //lock for all
 
 static pthread_mutex_t mutexWorker = PTHREAD_MUTEX_INITIALIZER; //lock for worker
 static pthread_cond_t condWorker = PTHREAD_COND_INITIALIZER; //cond for worker
@@ -53,20 +56,20 @@ static pthread_mutex_t mutexMain = PTHREAD_MUTEX_INITIALIZER; //lock for main
 static pthread_cond_t condMain = PTHREAD_COND_INITIALIZER; //cond for main
 
 static BOOL gSleepMain = FALSE;
-static struct timespec ONE_MILLI = {.tv_sec = 0, .tv_nsec = 1000000L};
+static const struct timespec ONE_MILLI = {.tv_sec = 0, .tv_nsec = 1000000L};
 
 
 static CODE_T *gQueue;
-_Atomic static KNOWN_T *gKnown;
+static _Atomic KNOWN_T *gKnown;
 
 static int gLevelStart;
 static int gLevelEnd;
 
-_Atomic static int gFetchIndex;
-_Atomic static int gDoneCount;
-_Atomic static int gNextLevelEnd;
+static _Atomic int gFetchIndex;
+static _Atomic int gDoneCount;
+static _Atomic int gNextLevelEnd;
 
-_Atomic static int gWorkers;
+static _Atomic int gWorkers;
 static BOOL gRunning;
 
 
@@ -79,24 +82,32 @@ static inline void codeToStatus(const CODE_T code, STATUS_T status[]) {
     CODE_T r1 = code % gR1Mod;
     CODE_T r2 = code / gR1Mod;
     CODE_T t = FACTORIAL_OCT;
-    int used[8] = {0};
+    // int used[8] = {0};
     // memset(used, false, sizeof(bool) * 8);
     for (int i = 0; i < 8; i++) {
         t /= 8 - i;
         status[i] = (STATUS_T) (r1 / t);
         status[15 - i] = (STATUS_T) (r2 % 3);
-        used[i] = 0;
+        // used[i] = 0;
         r1 %= t;
         r2 /= 3;
     }
+    uint32_t free_mask = 0x00ff;
     for (int i = 0; i < 8; i++) {
-        for (int j = 0; j <= status[i]; j++) {
-            if (used[j]) {
-                status[i]++;
-            }
-        }
-        used[status[i]] = 1;
+        uint32_t d = status[i];
+        uint32_t pos_mask = _pdep_u32( 1 << d, free_mask);
+        d = (STATUS_T)_tzcnt_u32(pos_mask);
+        status[i] = (STATUS_T) d;
+        free_mask &= ~pos_mask;
     }
+    // for (int i = 0; i < 8; i++) {
+    //     for (int j = 0; j <= status[i]; j++) {
+    //         if (used[j]) {
+    //             status[i]++;
+    //         }
+    //     }
+    //     used[status[i]] = 1;
+    // }
 }
 
 /**
@@ -107,15 +118,41 @@ static inline void codeToStatus(const CODE_T code, STATUS_T status[]) {
 static inline CODE_T getCode(const STATUS_T status[]) {
     CODE_T r1 = 0;
     CODE_T r2 = 0;
+    // for (int i = 0; i < 8; i++) {
+    //     STATUS_T t = status[i];
+    //     for (int j = 0; j < i; j++) {
+    //         if (status[i] > status[j]) {
+    //             t--;
+    //         }
+    //     }
+    //     r2 = r2 * 3 + status[8 + i];
+    //     r1 = r1 * (8 - i) + t;
+    // }
+    uint32_t mask = 0;
+
+    // 使用位操作计算逆序数
     for (int i = 0; i < 8; i++) {
-        STATUS_T t = status[i];
-        for (int j = 0; j < i; j++) {
-            if (status[i] > status[j]) {
-                t--;
-            }
-        }
+        uint8_t x = status[i];
+        // 生成比x小的所有数字的掩码
+        uint32_t smaller_mask = (1U << x) - 1;
+        // 获取在已出现元素中比x小的元素
+        uint32_t bits = mask & smaller_mask;
+        // 计算个数
+        uint32_t count = 0;
+// #ifdef __POPCNT__
+        count = _mm_popcnt_u32(bits); // 使用POPCNT指令
+// #else
+        // 通用popcount实现
+        // bits =  (bits * 0x0202020202ULL & 0x010884422010ULL) & 0x0f;
+// #endif
+
+        r1 = r1 * (8 - i) + x - count;
+        mask |= (1U << x); // 标记当前元素已使用
+    }
+
+    // 计算 r2（方向部分）
+    for (int i = 0; i < 8; i++) {
         r2 = r2 * 3 + status[8 + i];
-        r1 = r1 * (8 - i) + t;
     }
     return r1 + gR1Mod * r2;
 }
@@ -127,13 +164,17 @@ static inline CODE_T getCode(const STATUS_T status[]) {
  * @param ret 旋转后的状态
  */
 static inline void rotate(STATUS_T status[], int way, STATUS_T ret[]) {
-    memcpy(ret, status, sizeof(STATUS_T) * 16);
+    // memcpy(ret, status, sizeof(STATUS_T) * 16);
+    __m128i* src_vec = (__m128i*)status;
+    __m128i* dst_vec = (__m128i*)ret;
+    dst_vec[0] = src_vec[0];
     const int (*map)[3] = mapping[way % gHALF];
+    const int is_forward = (way < gHALF);
     for (int i = 0; i < 4; i++) {
         const int *maplet = map[i];
-        const int src = way < gHALF ? maplet[0] : maplet[1];
-        const int dst = way < gHALF ? maplet[1] : maplet[0];
-        const int inc = way < gHALF ? maplet[2] : (3 - maplet[2]) % 3;
+        const int src = is_forward ? maplet[0] : maplet[1];
+        const int dst = is_forward ? maplet[1] : maplet[0];
+        const int inc = is_forward ? maplet[2] : 3 - maplet[2];
         ret[dst] = status[src];
         ret[dst + 8] = (status[src + 8] + inc) % 3;
     }
@@ -146,15 +187,15 @@ typedef struct {
 
 theCallStruct tcs;
 
-void *processWithCall(void *args) {
+void* processWithCall(void *args) {
     theCallStruct *data = ((theCallStruct *) args);
     if (data->theCall == NULL) {return NULL;}
     const struct timespec ts = {.tv_sec = 0, .tv_nsec = 100000000};
     while (gRunning) {
         nanosleep(&ts, NULL);
-        int a = atomic_load(&gDoneCount);
+        int a = gDoneCount;
         int b = gSpaceLegal;
-        int c = atomic_load(&gNextLevelEnd);
+        int c = gNextLevelEnd;
         data->theCall((traversalMsg){.type = TRAVERSAL_MSG_STEP, .data = {a, b, c}});
     }
     return NULL;
@@ -249,10 +290,12 @@ DLL_EXPORT int traversalDualCube(void (*callback)(traversalMsg), const unsigned 
         gSpaceAll = DUAL_CUBE_FULL_SPACE / 24;
         gSpaceLegal = DUAL_CUBE_FULL_SPACE / 72;
         gR1Mod = FACTORIAL_OCT /8;
+        gBatchSize = 8;
     }else if (mWays == 12){
         gSpaceAll = DUAL_CUBE_FULL_SPACE;
         gSpaceLegal = DUAL_CUBE_FULL_SPACE / 3;
         gR1Mod = FACTORIAL_OCT;
+        gBatchSize = 512;
     }else {
         return 1;
     }
@@ -299,7 +342,7 @@ DLL_EXPORT int traversalDualCube(void (*callback)(traversalMsg), const unsigned 
     int CORES = sysconf(_SC_NPROCESSORS_ONLN);
 #endif
 
-    int MAX_THREADS = nThreads ? nThreads : CORES;
+    int MAX_THREADS = nThreads > 0 ? nThreads : CORES;
 
     pthread_t threads[MAX_THREADS];
     for (int i = 0; i < MAX_THREADS; i++) {
@@ -325,8 +368,10 @@ DLL_EXPORT int traversalDualCube(void (*callback)(traversalMsg), const unsigned 
         nanosleep(&ONE_MILLI, NULL);
     }
 
+    snprintf(msg.data.str,254,"Use %d threads\n", MAX_THREADS);
+    callback(msg);
 
-    gQueue[atomic_fetch_add(&gNextLevelEnd, 1)] = 0;
+    gQueue[(int)atomic_fetch_add(&gNextLevelEnd, 1)] = 0;
 
     while (gLevelStart < atomic_load(&gNextLevelEnd)) {
         struct timespec start;

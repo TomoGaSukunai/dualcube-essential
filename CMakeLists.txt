@@ -16,6 +16,8 @@ include_directories(Corin)
 
 add_link_options(-static)
 add_compile_options(-O3)
+add_compile_options(-mbmi2)
+add_compile_options(-march=native)
 
 add_library(DualCubeDLL SHARED  ${DLL_SOURCE_FILES})
 
