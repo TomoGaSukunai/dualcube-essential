@@ -70,7 +70,7 @@ static _Atomic int gDoneCount;
 static _Atomic int gNextLevelEnd;
 
 static _Atomic int gWorkers;
-static BOOL gRunning;
+static _Atomic BOOL gRunning;
 
 
 /**
@@ -191,11 +191,11 @@ void* processWithCall(void *args) {
     theCallStruct *data = ((theCallStruct *) args);
     if (data->theCall == NULL) {return NULL;}
     const struct timespec ts = {.tv_sec = 0, .tv_nsec = 100000000};
-    while (gRunning) {
+    while (atomic_load_explicit(&gRunning, memory_order_acquire)) {
         nanosleep(&ts, NULL);
-        int a = gDoneCount;
+        int a = atomic_load_explicit(&gDoneCount, memory_order_acquire);
         int b = gSpaceLegal;
-        int c = gNextLevelEnd;
+        int c = atomic_load_explicit(&gNextLevelEnd, memory_order_acquire);
         data->theCall((traversalMsg){.type = TRAVERSAL_MSG_STEP, .data = {a, b, c}});
     }
     return NULL;
@@ -208,7 +208,7 @@ void* processWithCall(void *args) {
 void *workerThread(void *args) {
     atomic_fetch_add(&gWorkers, 1);
     traversalMsg msg = {.type = TRAVERSAL_MSG_INFO};
-    while (gRunning) {
+    while (atomic_load_explicit(&gRunning, memory_order_acquire)) {
         int _idx = atomic_fetch_add(&gFetchIndex, gBatchSize);
         if (_idx < gLevelEnd) {
             const int _aim = _idx + gBatchSize > gLevelEnd ? gLevelEnd : _idx + gBatchSize;
@@ -216,7 +216,7 @@ void *workerThread(void *args) {
             const int _works = _aim - _idx;
             while (_idx < _aim) {
                 const CODE_T nc = gQueue[_idx++];
-                KNOWN_T k = gKnown[nc];
+                KNOWN_T k = atomic_load_explicit(&gKnown[nc], memory_order_relaxed);
                 if (k != gKnownVisited) {
                     STATUS_T status[16];
                     STATUS_T temp_s[16];
@@ -237,10 +237,10 @@ void *workerThread(void *args) {
                                 int now = atomic_fetch_add(&gNextLevelEnd, 1);
                                 gQueue[now] = nn;
                             }
-                            gKnown[nn] |= r_mask;
+                            atomic_fetch_or(&gKnown[nn], r_mask);
                         }
                     }
-                    gKnown[nc] = gKnownVisited;
+                    atomic_store_explicit(&gKnown[nc], gKnownVisited, memory_order_release);
                 }
             }
             int _done = atomic_fetch_add(&gDoneCount, _works);
@@ -312,18 +312,21 @@ DLL_EXPORT int traversalDualCube(void (*callback)(traversalMsg), const unsigned 
     atomic_store(&gDoneCount, 0);
     atomic_store(&gWorkers, 0);
 
-    gRunning = TRUE;
+    atomic_store_explicit(&gRunning, TRUE, memory_order_release);
     gSleepMain = FALSE;
 
-    condWorker = PTHREAD_COND_INITIALIZER;
-    mutexWorker = PTHREAD_MUTEX_INITIALIZER;
-    condMain = PTHREAD_COND_INITIALIZER;
-    mutexMain = PTHREAD_MUTEX_INITIALIZER;
-
+    pthread_cond_init(&condWorker, NULL);
+    pthread_mutex_init(&mutexWorker, NULL);
+    pthread_cond_init(&condMain, NULL);
+    pthread_mutex_init(&mutexMain, NULL);
 
 
     gKnown = (_Atomic KNOWN_T *) malloc(sizeof(_Atomic KNOWN_T) * gSpaceAll);
-    memset(gKnown, 0, sizeof(_Atomic KNOWN_T) * gSpaceAll );
+    // memset(gKnown, 0, sizeof(_Atomic KNOWN_T) * gSpaceAll );
+    for (size_t i = 0; i < gSpaceAll; i++) {
+        atomic_init(&gKnown[i], 0);
+    }
+
     gQueue = (CODE_T *) malloc(sizeof(CODE_T) * gSpaceLegal);
     // memset(gQueue, 0, sizeof(CODE_T) * gSpaceLegal);
 
@@ -386,9 +389,9 @@ DLL_EXPORT int traversalDualCube(void (*callback)(traversalMsg), const unsigned 
         atomic_store(&gFetchIndex, gLevelStart / gBatchSize * gBatchSize);
 
         pthread_mutex_lock(&mutexMain);
-
-        pthread_cond_broadcast(&condWorker);
         gSleepMain = TRUE;
+        pthread_cond_broadcast(&condWorker);
+
         pthread_cond_wait(&condMain, &mutexMain);
         gSleepMain = FALSE;
         // pthread_mutex_lock(&worker_mutex);
@@ -408,7 +411,7 @@ DLL_EXPORT int traversalDualCube(void (*callback)(traversalMsg), const unsigned 
         }
         gLevelStart = gLevelEnd;
     }
-    gRunning = FALSE;
+    atomic_store_explicit(&gRunning, FALSE, memory_order_release);
 
 
     while (atomic_load(&gWorkers) > 0) {
